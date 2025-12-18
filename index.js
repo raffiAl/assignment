@@ -1,6 +1,3 @@
-// index.js (Versi Debug-Friendly)
-
-// 1. Import library yang dibutuhkan
 require('dotenv').config(); // Baca file .env
 const express = require('express');
 const bcrypt = require('bcryptjs');

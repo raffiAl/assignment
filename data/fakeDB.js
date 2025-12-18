@@ -1,7 +1,3 @@
-// data/fakeDb.js (Versi Sederhana)
-
-// Ini adalah "database" kita, sebenarnya hanya array di memori.
-// Kita menambahkan satu data contoh agar endpoint GET /activities langsung ada isinya.
 let activities = [
     {
         id: 1,
