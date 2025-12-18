@@ -1,0 +1,17 @@
+# Folder dependency
+node_modules/
+
+# File log
+*.log
+
+# Build output
+dist/
+build/
+
+# Sistem OS
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+*.swp
