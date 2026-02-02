@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KASIR CAFE RIDHO</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="mobile-header">
+        <div class="mobile-logo">
+          <i class="fas fa-coffee"></i>
+          <h1>CAFE RIDHO</h1>
+        </div>
+        <button class="mobile-menu-btn">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+
+      <div class="main-grid">
+        <div class="left-panel">
+          <div class="brand-section">
+            <div class="logo">
+              <div class="logo-icon">
+                <i class="fas fa-coffee"></i>
+              </div>
+              <div class="logo-text">
+                <h1>CAFE RIDHO</h1>
+                <p>Powered by Pemrograman Berbasis Platform</p>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat-item">
+                <i class="fas fa-bolt"></i>
+                <div>
+                  <p class="stat-value" id="today-transactions">0</p>
+                  <p class="stat-label">Transaksi</p>
+                </div>
+              </div>
+              <div class="stat-item">
+                <i class="fas fa-chart-line"></i>
+                <div>
+                  <p class="stat-value" id="today-revenue">Rp 0</p>
+                  <p class="stat-label">Pendapatan</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="products-section">
+            <div class="section-header">
+              <h2><i class="fas fa-utensils"></i> MENU CAFE</h2>
+              <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input
+                  type="text"
+                  id="product-search"
+                  placeholder="Cari menu..."
+                />
+              </div>
+            </div>
+
+            <div class="category-tabs">
+              <button class="cat-btn active" data-category="all">ALL</button>
+              <button class="cat-btn" data-category="food">MAKANAN</button>
+              <button class="cat-btn" data-category="drink">MINUMAN</button>
+              <button class="cat-btn" data-category="snack">SNACK</button>
+              <button class="cat-btn" data-category="dessert">DESSERT</button>
+            </div>
+
+            <div class="products-grid" id="products-grid"></div>
+          </div>
+        </div>
+
+        <div class="right-panel">
+          <div class="cart-section">
+            <div class="cart-header">
+              <h2><i class="fas fa-shopping-cart"></i> KERANJANG</h2>
+              <div class="cart-info">
+                <span class="item-count" id="cart-count">0 item</span>
+                <button class="clear-btn" id="clear-cart">
+                  <i class="fas fa-trash"></i> Kosongkan
+                </button>
+              </div>
+            </div>
+
+            <div class="cart-items" id="cart-items">
+              <div class="empty-state">
+                <i class="fas fa-cart-arrow-down"></i>
+                <p>Keranjang kosong</p>
+                <small>Pilih menu dari kiri</small>
+              </div>
+            </div>
+
+            <div class="cart-summary">
+              <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="subtotal">Rp 0</span>
+              </div>
+              <div class="summary-row">
+                <span>PPN 10%</span>
+                <span id="tax">Rp 0</span>
+              </div>
+              <div class="summary-row discount-row">
+                <span>Diskon</span>
+                <div class="discount-input">
+                  <input
+                    type="number"
+                    id="discount"
+                    value="0"
+                    min="0"
+                    max="50"
+                  />
+                  <span>%</span>
+                </div>
+              </div>
+              <div class="summary-row total-row">
+                <span>TOTAL</span>
+                <span id="total">Rp 0</span>
+              </div>
+            </div>
+
+            <div class="payment-section">
+              <div class="payment-methods">
+                <button class="pay-btn active" data-method="cash">
+                  <i class="fas fa-money-bill-wave"></i>
+                  <span>Tunai</span>
+                </button>
+                <button class="pay-btn" data-method="qris">
+                  <i class="fas fa-qrcode"></i>
+                  <span>QRIS</span>
+                </button>
+                <button class="pay-btn" data-method="edc">
+                  <i class="fas fa-credit-card"></i>
+                  <span>Kartu</span>
+                </button>
+                <button class="pay-btn" data-method="ovo">
+                  <i class="fas fa-mobile-alt"></i>
+                  <span>OVO</span>
+                </button>
+              </div>
+
+              <div class="cash-input">
+                <div class="input-group">
+                  <label>Uang Diberikan</label>
+                  <div class="input-wrapper">
+                    <i class="fas fa-money-bill"></i>
+                    <input
+                      type="number"
+                      id="cash-amount"
+                      placeholder="0"
+                      min="0"
+                    />
+                  </div>
+                </div>
+                <div class="change-display">
+                  <span>Kembalian</span>
+                  <span id="change-amount">Rp 0</span>
+                </div>
+              </div>
+
+              <div class="action-buttons">
+                <button class="calc-btn" id="calculate-btn">
+                  <i class="fas fa-calculator"></i> Hitung
+                </button>
+                <button class="pay-now-btn" id="pay-btn">
+                  <i class="fas fa-check-circle"></i> Bayar Sekarang
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-panel">
+            <div class="ai-header">
+              <h3>DZIKRIL ASSISTANT</h3>
+            </div>
+            <div class="ai-content">
+              <div class="ai-message" id="ai-suggestion">
+                <p>
+                  Halo! Saya Dzikril Assistant Cafe Ridho. Saya akan membantu
+                  transaksi Anda.
+                </p>
+              </div>
+              <div class="ai-stats">
+                <div class="ai-stat">
+                  <i class="fas fa-fire"></i>
+                  <div>
+                    <p class="ai-value" id="top-product">-</p>
+                    <p class="ai-label">Menu Terlaris</p>
+                  </div>
+                </div>
+                <div class="ai-stat">
+                  <i class="fas fa-chart-bar"></i>
+                  <div>
+                    <p class="ai-value" id="prediction">Rp 0</p>
+                    <p class="ai-label">Prediksi Hari Ini</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="receipt-modal" id="receipt-modal">
+        <div class="receipt">
+          <div class="receipt-header">
+            <div class="receipt-logo">
+              <i class="fas fa-coffee"></i>
+              <h2>CAFE RIDHO</h2>
+            </div>
+            <p>Jl. Teknologi No. 88, Bandung</p>
+            <p>Telp: 0812-3456-7890</p>
+            <p id="receipt-time">01/01/2024 10:00:00</p>
+          </div>
+          <div class="receipt-body">
+            <div class="receipt-items" id="receipt-items"></div>
+            <div class="receipt-total" id="receipt-total"></div>
+          </div>
+          <div class="receipt-footer">
+            <p>================================</p>
+            <p>Terima kasih telah berkunjung!</p>
+          </div>
+          <div class="receipt-actions">
+            <button class="print-btn" id="print-btn">
+              <i class="fas fa-print"></i> Cetak
+            </button>
+            <button class="close-btn" id="close-receipt">
+              <i class="fas fa-times"></i> Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="notifications" id="notifications"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
