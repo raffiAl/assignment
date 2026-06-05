@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisasi ERD SDLC Interaktif - Moh. Raffi Alfatih</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas untuk Ekspor Gambar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b1329;
+        }
+
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Latar Belakang Kotak Grid Teknik */
+        .grid-bg {
+            background-size: 24px 24px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        }
+
+        /* Gaya Khusus untuk Node Entitas */
+        .erd-node {
+            touch-action: none;
+            cursor: grab;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, border-color 0.2s, ring 0.2s;
+        }
+
+        .erd-node:active {
+            cursor: grabbing;
+        }
+
+        /* Gaya Khusus untuk Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Header Panel -->
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white flex items-center gap-2">
+                        ERD SDLC System Visualizer
+                        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20">Sesi 10 x Sesi 4</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Penyusun: Moh. Raffi Alfatih (NIM: 20240040066)</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="exportERD('png')" class="flex-1 md:flex-initial flex items-center justify-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg transition shadow-md shadow-indigo-500/10">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Unduh PNG (Utuh)
+                </button>
+                <button onclick="resetNodes()" class="flex-1 md:flex-initial text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-lg border border-slate-700 transition">
+                    Atur Posisi Semula
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama (Flex Layout untuk Mencegah Overlap saat Resizing) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col lg:flex-row gap-6 items-stretch">
+        
+        <!-- Kolom Kiri: Kanvas ERD Interaktif -->
+        <section class="flex-1 flex flex-col gap-4 min-w-0">
+            <!-- Menambahkan max-w-full untuk mencegah overlap saat ditarik -->
+            <div id="erd-canvas-container" class="bg-slate-950 rounded-2xl border border-slate-800 shadow-xl overflow-hidden flex flex-col relative h-[600px] min-h-[400px] w-full max-w-full" style="resize: both;">
+                
+                <!-- Sub Header Kanvas -->
+                <div class="bg-slate-950/90 border-b border-slate-800 px-5 py-3 flex justify-between items-center z-20">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 select-none">Kanvas Interaktif (Silakan Geser Entitas & Tarik Pojok Kanan Bawah)</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 flex gap-3 select-none">
+                        <span>🔑 PK = Primary Key</span>
+                        <span>FK = Foreign Key</span>
+                    </div>
+                </div>
+
+                <!-- Area Screenshot Target (Ditambahkan fitur scroll agar elemen tenggelam bisa diakses) -->
+                <div id="erd-capture-area" class="flex-1 w-full h-full relative grid-bg overflow-auto bg-[#0a0f1d] p-4">
+                    
+                    <!-- SVG Overlay untuk Menggambar Garis Relasi -->
+                    <svg id="relation-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10 min-w-[1200px] min-h-[800px]">
+                        <!-- Marker Kepala Panah Kardinalitas -->
+                        <defs>
+                            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1"/>
+                            </marker>
+                        </defs>
+                    </svg>
+
+                    <!-- ENTITAS 1: PROYEK -->
+                    <div id="node-proyek" class="erd-node absolute bg-slate-900 border-2 border-indigo-500 rounded-xl w-60 shadow-lg z-20" style="left: 380px; top: 120px;">
+                        <div class="bg-indigo-600/20 px-3 py-2 rounded-t-lg border-b border-indigo-500/30 flex justify-between items-center">
+                            <span class="font-bold text-xs text-indigo-300">PROYEK</span>
+                            <span class="text-[9px] bg-indigo-500/30 text-white px-1.5 py-0.5 rounded font-mono">1:1 / 1:N</span>
+                        </div>
+                        <div class="p-3 space-y-1 text-xs">
+                            <div class="flex justify-between text-indigo-400 font-semibold border-b border-slate-800/60 pb-1">
+                                <span>🔑 ID_Proyek</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (PK)</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Nama_Proyek</span>
+                                <span class="text-[9px] text-slate-500 font-mono">VARCHAR</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Anggaran</span>
+                                <span class="text-[9px] text-slate-500 font-mono">DECIMAL</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Jadwal</span>
+                                <span class="text-[9px] text-slate-500 font-mono">DATE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ENTITAS 2: ANGGOTA_TIM -->
+                    <div id="node-anggota" class="erd-node absolute bg-slate-900 border-2 border-emerald-500 rounded-xl w-60 shadow-lg z-20" style="left: 40px; top: 120px;">
+                        <div class="bg-emerald-600/20 px-3 py-2 rounded-t-lg border-b border-emerald-500/30 flex justify-between items-center">
+                            <span class="font-bold text-xs text-emerald-300">ANGGOTA_TIM</span>
+                            <span class="text-[9px] bg-emerald-500/30 text-white px-1.5 py-0.5 rounded font-mono">1:N</span>
+                        </div>
+                        <div class="p-3 space-y-1 text-xs">
+                            <div class="flex justify-between text-emerald-400 font-semibold border-b border-slate-800/60 pb-1">
+                                <span>🔑 ID_Anggota</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (PK)</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Nama_Anggota</span>
+                                <span class="text-[9px] text-slate-500 font-mono">VARCHAR</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Peran</span>
+                                <span class="text-[9px] text-slate-500 font-mono">VARCHAR</span>
+                            </div>
+                            <div class="flex justify-between text-emerald-400">
+                                <span>FK ID_Proyek</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (FK)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ENTITAS 3: KEBUTUHAN -->
+                    <div id="node-kebutuhan" class="erd-node absolute bg-slate-900 border-2 border-amber-500 rounded-xl w-60 shadow-lg z-20" style="left: 40px; top: 340px;">
+                        <div class="bg-amber-600/20 px-3 py-2 rounded-t-lg border-b border-amber-500/30 flex justify-between items-center">
+                            <span class="font-bold text-xs text-amber-300">KEBUTUHAN</span>
+                            <span class="text-[9px] bg-amber-500/30 text-white px-1.5 py-0.5 rounded font-mono">1:N</span>
+                        </div>
+                        <div class="p-3 space-y-1 text-xs">
+                            <div class="flex justify-between text-amber-400 font-semibold border-b border-slate-800/60 pb-1">
+                                <span>🔑 ID_Kebutuhan</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (PK)</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Deskripsi_Masalah</span>
+                                <span class="text-[9px] text-slate-500 font-mono">TEXT</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Peluang_Inovasi</span>
+                                <span class="text-[9px] text-slate-500 font-mono">TEXT</span>
+                            </div>
+                            <div class="flex justify-between text-emerald-400">
+                                <span>FK ID_Anggota</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (FK)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ENTITAS 4: KEPUTUSAN -->
+                    <div id="node-keputusan" class="erd-node absolute bg-slate-900 border-2 border-rose-500 rounded-xl w-60 shadow-lg z-20" style="left: 720px; top: 120px;">
+                        <div class="bg-rose-600/20 px-3 py-2 rounded-t-lg border-b border-rose-500/30 flex justify-between items-center">
+                            <span class="font-bold text-xs text-rose-300">KEPUTUSAN</span>
+                            <span class="text-[9px] bg-rose-500/30 text-white px-1.5 py-0.5 rounded font-mono">1:1</span>
+                        </div>
+                        <div class="p-3 space-y-1 text-xs">
+                            <div class="flex justify-between text-rose-400 font-semibold border-b border-slate-800/60 pb-1">
+                                <span>🔑 ID_Keputusan</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (PK)</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Jenis_Keputusan</span>
+                                <span class="text-[9px] text-slate-500 font-mono">VARCHAR</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Vendor_Eksternal</span>
+                                <span class="text-[9px] text-slate-500 font-mono">VARCHAR</span>
+                            </div>
+                            <div class="flex justify-between text-indigo-400">
+                                <span>FK ID_Proyek</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (FK)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ENTITAS 5: DOKUMEN_TEKNIS -->
+                    <div id="node-teknis" class="erd-node absolute bg-slate-900 border-2 border-sky-500 rounded-xl w-60 shadow-lg z-20" style="left: 380px; top: 340px;">
+                        <div class="bg-sky-600/20 px-3 py-2 rounded-t-lg border-b border-sky-500/30 flex justify-between items-center">
+                            <span class="font-bold text-xs text-sky-300">DOKUMEN_TEKNIS</span>
+                            <span class="text-[9px] bg-sky-500/30 text-white px-1.5 py-0.5 rounded font-mono">1:N</span>
+                        </div>
+                        <div class="p-3 space-y-1 text-xs">
+                            <div class="flex justify-between text-sky-400 font-semibold border-b border-slate-800/60 pb-1">
+                                <span>🔑 ID_Dokumen</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (PK)</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Arsitektur_Sistem</span>
+                                <span class="text-[9px] text-slate-500 font-mono">TEXT</span>
+                            </div>
+                            <div class="flex justify-between text-slate-300">
+                                <span>Kode_Program</span>
+                                <span class="text-[9px] text-slate-500 font-mono">TEXT</span>
+                            </div>
+                            <div class="flex justify-between text-emerald-400">
+                                <span>FK ID_Anggota</span>
+                                <span class="text-[9px] text-slate-500 font-mono">INT (FK)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Penunjuk Drag & Resize Handle di Pojok Kanan Bawah -->
+                <div class="absolute bottom-0 right-0 w-5 h-5 pointer-events-none z-30 flex items-end justify-end p-0.5">
+                    <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="22" y1="6" x2="6" y2="22" />
+                        <line x1="22" y1="12" x2="12" y2="22" />
+                        <line x1="22" y1="18" x2="18" y2="22" />
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kolom Kanan: Detail Kamus Data & SQL Generator (flex-shrink-0 menjaga ukurannya tetap stabil) -->
+        <section class="w-full lg:w-96 flex-shrink-0 flex flex-col gap-6">
+            
+            <!-- Panel Interaktif -->
+            <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800 shadow-xl flex-1 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-4">Metadata & Inspector</h3>
+                    
+                    <!-- Selektor Entitas -->
+                    <div class="mb-4">
+                        <label class="block text-xs text-slate-400 mb-2 font-medium">Klik entitas di kiri atau pilih di bawah:</label>
+                        <select id="entity-selector" onchange="inspectEntity(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+                            <option value="proyek">Proyek (Data Proyek)</option>
+                            <option value="anggota">Anggota Tim (PM/System Analyst)</option>
+                            <option value="kebutuhan">Kebutuhan (Data Kebutuhan)</option>
+                            <option value="keputusan">Keputusan (Analisis Make-or-Buy)</option>
+                            <option value="teknis">Dokumen Teknis (Data Teknis)</option>
+                        </select>
+                    </div>
+
+                    <!-- Tampilan Penjelasan Objek -->
+                    <div id="inspector-desc" class="bg-slate-900/50 p-4 rounded-xl border border-slate-800/60 mb-4 text-xs text-slate-300 leading-relaxed">
+                        Data manajerial yang digunakan untuk mengelola dan memantau kemajuan proyek. Ini termasuk rincian anggaran (budget) yang dialokasikan, jadwal (schedule) pelaksanaan proyek, laporan kemajuan berkala, serta informasi mengenai staf yang terlibat dalam tim pengembangan.
+                    </div>
+
+                    <!-- Kamus Data Tabular -->
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Kamus Data Atribut</h4>
+                    <div class="overflow-x-auto max-h-40 border border-slate-800 rounded-lg">
+                        <table class="w-full text-left border-collapse text-[11px]">
+                            <thead>
+                                <tr class="bg-slate-900 text-slate-400">
+                                    <th class="p-2 border-b border-slate-800">Atribut</th>
+                                    <th class="p-2 border-b border-slate-800">Tipe</th>
+                                    <th class="p-2 border-b border-slate-800">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attributes-table-body">
+                                <!-- Diisi via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Bagian SQL Generator -->
+                <div class="mt-6 border-t border-slate-800 pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono">SQL DDL Generator</h4>
+                        <button onclick="copySQL()" class="text-[10px] text-slate-400 hover:text-white transition">Copy SQL</button>
+                    </div>
+                    <pre class="bg-slate-900 p-3 rounded-lg text-[10px] text-emerald-300 overflow-x-auto font-mono max-h-36 border border-slate-800/80" id="sql-output">
+-- SQL Generator Loading...
+                    </pre>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 mt-8 bg-slate-950/60">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+            <p>© 2026 Moh. Raffi Alfatih (20240040066) - Universitas Nusa Putra.</p>
+            <p class="flex items-center gap-2">
+                Teknik Informatika <span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span> Sesi 10 Tugas ERD
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Drag-and-Drop & SVG Rendering Engine -->
+    <script>
+        // Database Metadata Entitas & Atribut dari Kamus Data Sesi 4
+        const entityMetadata = {
+            proyek: {
+                title: "PROYEK",
+                desc: "Data manajerial yang digunakan untuk mengelola dan memantau kemajuan proyek. Ini termasuk rincian anggaran (budget) yang dialokasikan, jadwal (schedule) pelaksanaan proyek, laporan kemajuan berkala, serta informasi mengenai staf yang terlibat dalam tim pengembangan.",
+                attributes: [
+                    { name: "ID_Proyek", type: "INT", desc: "Kunci utama pengidentifikasi proyek" },
+                    { name: "Nama_Proyek", type: "VARCHAR(150)", desc: "Nama/Judul proyek pengembangan" },
+                    { name: "Anggaran", type: "DECIMAL(15,2)", desc: "Total budget yang dialokasikan" },
+                    { name: "Jadwal", type: "DATE", desc: "Tenggat waktu pelaksanaan proyek" }
+                ],
+                sql: `CREATE TABLE Proyek (\n  ID_Proyek INT PRIMARY KEY AUTO_INCREMENT,\n  Nama_Proyek VARCHAR(150) NOT NULL,\n  Anggaran DECIMAL(15,2) NOT NULL,\n  Jadwal DATE NOT NULL\n);`
+            },
+            anggota: {
+                title: "ANGGOTA_TIM",
+                desc: "Individu atau stakeholders yang memiliki peran dan tanggung jawab kunci dalam setiap tahapan SDLC (seperti Project Manager dan System Analyst) guna mengelola dan menganalisis sistem.",
+                attributes: [
+                    { name: "ID_Anggota", type: "INT", desc: "Kunci utama pengidentifikasi tim" },
+                    { name: "Nama_Anggota", type: "VARCHAR(100)", desc: "Nama lengkap anggota pengembang" },
+                    { name: "Peran", type: "VARCHAR(50)", desc: "Peran dalam SDLC (PM/Analyst)" },
+                    { name: "ID_Proyek", type: "INT", desc: "Kunci asing proyek tempat ditugaskan" }
+                ],
+                sql: `CREATE TABLE Anggota_Tim (\n  ID_Anggota INT PRIMARY KEY AUTO_INCREMENT,\n  Nama_Anggota VARCHAR(100) NOT NULL,\n  Peran VARCHAR(50) NOT NULL,\n  ID_Proyek INT,\n  FOREIGN KEY (ID_Proyek) REFERENCES Proyek(ID_Proyek)\n);`
+            },
+            kebutuhan: {
+                title: "KEBUTUHAN",
+                desc: "Kumpulan informasi rinci mengenai apa yang diharapkan dari sistem baru. Ini mencakup identifikasi masalah-masalah yang ada dalam sistem saat ini serta peluang-peluang inovasi sistem.",
+                attributes: [
+                    { name: "ID_Kebutuhan", type: "INT", desc: "Kunci utama berkas kebutuhan" },
+                    { name: "Deskripsi_Masalah", type: "TEXT", desc: "Detail problem yang diidentifikasi" },
+                    { name: "Peluang_Inovasi", type: "TEXT", desc: "Ide peningkatan & otomatisasi" },
+                    { name: "ID_Anggota", type: "INT", desc: "Analis Sistem yang mengidentifikasi" }
+                ],
+                sql: `CREATE TABLE Kebutuhan (\n  ID_Kebutuhan INT PRIMARY KEY AUTO_INCREMENT,\n  Deskripsi_Masalah TEXT,\n  Peluang_Inovasi TEXT,\n  ID_Anggota INT,\n  FOREIGN KEY (ID_Anggota) REFERENCES Anggota_Tim(ID_Anggota)\n);`
+            },
+            keputusan: {
+                title: "KEPUTUSAN",
+                desc: "Informasi yang menjadi dasar keputusan strategis dalam proyek, seperti hasil analisis Make-or-Buy (membangun sendiri secara internal atau membeli lisensi dari vendor luar).",
+                attributes: [
+                    { name: "ID_Keputusan", type: "INT", desc: "Kunci utama log keputusan" },
+                    { name: "Jenis_Keputusan", type: "VARCHAR(50)", desc: "Nilai: Make (Buat) atau Buy (Beli)" },
+                    { name: "Vendor_Eksternal", type: "VARCHAR(150)", desc: "Nama vendor penyedia (jika Buy)" },
+                    { name: "ID_Proyek", type: "INT", desc: "Kunci asing referensi proyek terkait" }
+                ],
+                sql: `CREATE TABLE Keputusan (\n  ID_Keputusan INT PRIMARY KEY AUTO_INCREMENT,\n  Jenis_Keputusan VARCHAR(50) NOT NULL,\n  Vendor_Eksternal VARCHAR(150),\n  ID_Proyek INT UNIQUE,\n  FOREIGN KEY (ID_Proyek) REFERENCES Proyek(ID_Proyek)\n);`
+            },
+            teknis: {
+                title: "DOKUMEN_TEKNIS",
+                desc: "Data teknis implementasi sistem. Mencakup arsitektur sistem yang dirancang, strategi teknis pengembangan, serta kode instruksi pemrograman inti dari sistem.",
+                attributes: [
+                    { name: "ID_Dokumen", type: "INT", desc: "Kunci utama dokumen teknis" },
+                    { name: "Arsitektur_Sistem", type: "TEXT", desc: "Skema arsitektur perangkat lunak" },
+                    { name: "Kode_Program", type: "TEXT", desc: "Instruksi kode / dokumentasi API" },
+                    { name: "ID_Anggota", type: "INT", desc: "Kunci asing Anggota Tim yang menyusun" }
+                ],
+                sql: `CREATE TABLE Dokumen_Teknis (\n  ID_Dokumen INT PRIMARY KEY AUTO_INCREMENT,\n  Arsitektur_Sistem TEXT,\n  Kode_Program TEXT,\n  ID_Anggota INT,\n  FOREIGN KEY (ID_Anggota) REFERENCES Anggota_Tim(ID_Anggota)\n);`
+            }
+        };
+
+        // Koordinat Default Posisi Awal Node
+        const defaultPositions = {
+            'node-proyek': { x: 380, y: 120 },
+            'node-anggota': { x: 40, y: 120 },
+            'node-kebutuhan': { x: 40, y: 340 },
+            'node-keputusan': { x: 720, y: 120 },
+            'node-teknis': { x: 380, y: 340 }
+        };
+
+        // Inisialisasi Drag and Drop Engine
+        document.querySelectorAll('.erd-node').forEach(node => {
+            node.addEventListener('mousedown', startDrag);
+            node.addEventListener('touchstart', startDrag, { passive: false });
+
+            // Klik node untuk melakukan inspeksi kamus data
+            node.addEventListener('click', () => {
+                const key = node.id.replace('node-', '');
+                document.getElementById('entity-selector').value = key;
+                inspectEntity(key);
+            });
+        });
+
+        let activeDragNode = null;
+        let startX = 0, startY = 0;
+
+        function startDrag(e) {
+            e.preventDefault();
+            activeDragNode = this;
+            
+            const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+
+            startX = clientX - activeDragNode.offsetLeft;
+            startY = clientY - activeDragNode.offsetTop;
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function drag(e) {
+            if (!activeDragNode) return;
+            e.preventDefault();
+
+            const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+
+            const container = document.getElementById('erd-capture-area');
+            let newX = clientX - startX;
+            let newY = clientY - startY;
+
+            // Batasi gerakan agar tidak keluar area kanvas
+            newX = Math.max(0, Math.min(newX, container.offsetWidth - activeDragNode.offsetWidth));
+            newY = Math.max(0, Math.min(newY, container.offsetHeight - activeDragNode.offsetHeight));
+
+            activeDragNode.style.left = newX + 'px';
+            activeDragNode.style.top = newY + 'px';
+
+            drawLines();
+        }
+
+        function stopDrag() {
+            activeDragNode = null;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+        }
+
+        // Fungsi Menggambar Garis Relasi Dinamis dengan Aturan Kardinalitas
+        function drawLines() {
+            const svg = document.getElementById('relation-svg');
+            
+            // Hapus jalur lama kecuali defs
+            const lines = svg.querySelectorAll('path.rel-line, text.card-text');
+            lines.forEach(l => l.remove());
+
+            // List relasi antar entitas
+            const relations = [
+                { from: 'node-proyek', to: 'node-anggota', label: 'Dikelola Tim', cardFrom: '1', cardTo: 'N' },
+                { from: 'node-anggota', to: 'node-kebutuhan', label: 'Mengidentifikasi', cardFrom: '1', cardTo: 'N' },
+                { from: 'node-proyek', to: 'node-keputusan', label: 'Menghasilkan', cardFrom: '1', cardTo: '1' },
+                { from: 'node-anggota', to: 'node-teknis', label: 'Menyusun', cardFrom: '1', cardTo: 'N' }
+            ];
+
+            relations.forEach(r => {
+                const elFrom = document.getElementById(r.from);
+                const elTo = document.getElementById(r.to);
+
+                if (!elFrom || !elTo) return;
+
+                // Hitung koordinat tengah box
+                const fromX = elFrom.offsetLeft + elFrom.offsetWidth / 2;
+                const fromY = elFrom.offsetTop + elFrom.offsetHeight / 2;
+                const toX = elTo.offsetLeft + elTo.offsetWidth / 2;
+                const toY = elTo.offsetTop + elTo.offsetHeight / 2;
+
+                // Gambar garis relasi
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${fromX} ${fromY} L ${toX} ${toY}`);
+                path.setAttribute('stroke', '#6366f1');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('class', 'rel-line');
+                path.setAttribute('marker-end', 'url(#arrow)');
+                svg.appendChild(path);
+
+                // Tambahkan Label Nama Relasi di Tengah Garis
+                const textLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                const midX = (fromX + toX) / 2;
+                const midY = (fromY + toY) / 2 - 10;
+                textLabel.setAttribute('x', midX);
+                textLabel.setAttribute('y', midY);
+                textLabel.setAttribute('fill', '#94a3b8');
+                textLabel.setAttribute('font-size', '10px');
+                textLabel.setAttribute('text-anchor', 'middle');
+                textLabel.setAttribute('class', 'card-text font-semibold');
+                textLabel.textContent = `${r.label} (${r.cardFrom}:${r.cardTo})`;
+                svg.appendChild(textLabel);
+            });
+        }
+
+        // Fungsi Inspeksi Kamus Data dengan visual active feedback pada entitas yang diklik
+        function inspectEntity(key) {
+            const data = entityMetadata[key];
+            if (!data) return;
+
+            document.getElementById('inspector-desc').innerText = data.desc;
+            document.getElementById('sql-output').innerText = data.sql;
+
+            const tbody = document.getElementById('attributes-table-body');
+            tbody.innerHTML = '';
+
+            data.attributes.forEach(attr => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-slate-900 hover:bg-slate-900/30 transition';
+                row.innerHTML = `
+                    <td class="p-2 text-slate-200 font-semibold">${attr.name}</td>
+                    <td class="p-2 text-indigo-400 font-mono">${attr.type}</td>
+                    <td class="p-2 text-slate-400">${attr.desc}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // BERSIHKAN STYLE LAMA: Hilangkan efek aktif, glow, scale, shadow, dan z-index dari semua entitas
+            document.querySelectorAll('.erd-node').forEach(node => {
+                node.classList.remove(
+                    'ring-4', 
+                    'ring-indigo-500/50', 'ring-emerald-500/50', 'ring-amber-500/50', 'ring-rose-500/50', 'ring-sky-500/50',
+                    'scale-[1.03]', 'shadow-[0_0_30px_rgba(99,102,241,0.5)]', 'shadow-2xl', 'z-30'
+                );
+                node.classList.add('z-20');
+                node.style.borderColor = '';
+            });
+
+            // AKTIFKAN STYLE BARU: Terapkan visual feedback interaktif untuk entitas yang sedang aktif/dipilih
+            const activeNode = document.getElementById(`node-${key}`);
+            if (activeNode) {
+                activeNode.classList.add('scale-[1.03]', 'z-30');
+                activeNode.classList.remove('z-20');
+                
+                if (key === 'proyek') {
+                    activeNode.classList.add('ring-4', 'ring-indigo-500/50', 'shadow-[0_0_30px_rgba(99,102,241,0.4)]');
+                    activeNode.style.borderColor = '#818cf8';
+                } else if (key === 'anggota') {
+                    activeNode.classList.add('ring-4', 'ring-emerald-500/50', 'shadow-[0_0_30px_rgba(16,185,129,0.4)]');
+                    activeNode.style.borderColor = '#34d399';
+                } else if (key === 'kebutuhan') {
+                    activeNode.classList.add('ring-4', 'ring-amber-500/50', 'shadow-[0_0_30px_rgba(245,158,11,0.4)]');
+                    activeNode.style.borderColor = '#fbbf24';
+                } else if (key === 'keputusan') {
+                    activeNode.classList.add('ring-4', 'ring-rose-500/50', 'shadow-[0_0_30px_rgba(244,63,94,0.4)]');
+                    activeNode.style.borderColor = '#f87171';
+                } else if (key === 'teknis') {
+                    activeNode.classList.add('ring-4', 'ring-sky-500/50', 'shadow-[0_0_30px_rgba(14,165,233,0.4)]');
+                    activeNode.style.borderColor = '#38bdf8';
+                }
+            }
+        }
+
+        // Fungsi Salin SQL
+        function copySQL() {
+            const sqlText = document.getElementById('sql-output').innerText;
+            navigator.clipboard.writeText(sqlText).then(() => {
+                alert("Kode SQL berhasil disalin ke clipboard!");
+            });
+        }
+
+        // Atur Posisi Semula (Reset Nodes)
+        function resetNodes() {
+            for (const [id, pos] of Object.entries(defaultPositions)) {
+                const node = document.getElementById(id);
+                if (node) {
+                    node.style.left = pos.x + 'px';
+                    node.style.top = pos.y + 'px';
+                }
+            }
+            drawLines();
+        }
+
+        // Fungsi Ekspor Gambar Utuh PNG/JPEG
+        function exportERD() {
+            const captureArea = document.getElementById('erd-capture-area');
+            
+            // Konfigurasi konversi gambar dengan latar belakang #0a0f1d solid
+            const options = {
+                backgroundColor: '#0a0f1d',
+                scale: 2, // Resolusi tinggi agar teks terbaca tajam
+                logging: false,
+                useCORS: true
+            };
+
+            html2canvas(captureArea, options).then(canvas => {
+                const image = canvas.toDataURL('image/png', 1.0);
+                const link = document.createElement('a');
+                link.download = `ERD_Sesi10_Moh_Raffi_Alfatih.png`;
+                link.href = image;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                alert("Gagal melakukan pengeksporan gambar: " + err);
+            });
+        }
+
+        // Inisialisasi Tampilan Awal
+        window.onload = () => {
+            drawLines();
+            inspectEntity('proyek');
+            
+            const containerElement = document.getElementById('erd-canvas-container');
+            if (containerElement) {
+                const resizeObserver = new ResizeObserver(() => {
+                    drawLines();
+                });
+                resizeObserver.observe(containerElement);
+            }
+        };
+
+        // Redraw lines saat ukuran layar berubah
+        window.onresize = drawLines;
+    </script>
+</body>
+</html>
