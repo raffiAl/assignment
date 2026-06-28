@@ -1,0 +1,2 @@
+Ini isi text file pertama.
+Ini isi text file kedua yang akan digabung.
